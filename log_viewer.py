@@ -1,9 +1,6 @@
-import sys
 from pathlib import Path
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit, QPushButton
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit
 from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QSystemTrayIcon ,QMenu
-from PyQt6.QtGui import QAction, QIcon
 
 
 LOG_FILE = Path("logs/data.log")
@@ -28,26 +25,7 @@ class LogViewer(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.load_logs)
         self.timer.start(1000)
-
-        self.tray = QSystemTrayIcon(self)
-
-        self.tray.setIcon(self.get_app_icon())
-
-        menu = QMenu(self)
-
-        self.toggle_action = QAction("Show Window", self)
-        self.quit_action = QAction("Exit", self)
-
-        self.toggle_action.triggered.connect(self.toggle_window)
-        self.quit_action.triggered.connect(self.exit_app)
-
-        menu.addAction(self.toggle_action)
-        menu.addAction(self.quit_action)
-
-        self.tray.setContextMenu(menu)
-        self.tray.activated.connect(self.tray_clicked)
-
-        self.tray.show()
+        
         self.hide()
 
     def load_logs(self):
@@ -67,46 +45,7 @@ class LogViewer(QWidget):
 
         else:
             self.log_area.setText("Log file not found.") 
-
-    def get_app_icon(self):
-        icon_path = "assets/app_icon.png"  
-
-        icon = QIcon(icon_path)
-
-        if not icon.isNull():
-            return icon
-
-
-        return QApplication.style().standardIcon(
-            QApplication.style().StandardPixmap.SP_ComputerIcon
-        )
-
-    def toggle_window(self):
-        if self.isVisible():
-            self.hide()
-            self.toggle_action.setText("Show Window")
-        else:
-            self.show()
-            self.raise_()
-            self.activateWindow()
-            self.toggle_action.setText("Hide Window")
-
-    def tray_clicked(self,reason):
-        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
-            self.toggle_window()
-
-    def exit_app(self):
-        QApplication.quit()                    
-
-def main():
-    app = QApplication(sys.argv)
-
-    window = LogViewer()
-
-    sys.exit(app.exec())
-
-if __name__ == "__main__":
-    main()    
+   
 
 # ========================================
 # 🟢 HEARTBEAT AGENT — PHASE 3 DOCUMENTATION

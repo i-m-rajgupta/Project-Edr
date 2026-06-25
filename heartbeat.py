@@ -1,82 +1,76 @@
 from datetime import datetime
+import threading
 import time
 from pathlib import Path
-import threading
 
-LOG_DIR = Path("logs")
-LOG_DIR.mkdir(parents=True, exist_ok=True)
+class HeartbeatEngine:
+    def __init__(self,log_file,interval=5):
 
-LOG_FILE = LOG_DIR / "data.log"
-INTERVAL = 5
+        self.log_file = Path(log_file)
+        self.interval = interval
+        
+        self.log_file.parent.mkdir(parents=True,exist_ok=True)
 
-stop_event = threading.Event()
+        self.stop_event = threading.Event()
+        self.thread = None
 
-def write_heartbeat():
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    def write_heartbeat(self):
+        timestamp = datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
 
-    entry = f"{timestamp} | HEARTBEAT | System is running \n"
-    
-    try:
-        with open(LOG_FILE,"a",encoding="utf-8") as file:
-            file.write(entry)
-
-        print(entry.strip())
-    
-    except OSError as e:
-        print(f"[ERROR] Failed to write log: {e}")
-
-def heartbeat_worker():
-    print("[WORKER] Heartbeat thread started")
-
-    while not stop_event.is_set():
-        write_heartbeat()
-        time.sleep(INTERVAL)
-
-    print("[WORKER] Heartbeat thread stopped")
-
-
-def main():
-    print("Heartbeat Agent Started...")
-    
-    heartbeat_thread = threading.Thread(
-        target=heartbeat_worker,
-        daemon=True
-    )
-
-    heartbeat_thread.start()
-
-    try:
-        while True:
-            print("[MAIN] Application is responsive")
-            time.sleep(1)
-
-    except KeyboardInterrupt:
-
-        print("\nStopping Heartbeat Agent...")
-
-        stop_event.set()
-
-        heartbeat_thread.join()
-
-        shutdown_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = (
+            f"{timestamp} | HEARTBEAT | System is running\n"
+        )
 
         try:
-            with open(LOG_FILE, "a", encoding="utf-8") as file:
-                file.write(
-                    f"{shutdown_time} | SYSTEM | Agent stopped by user\n"
-                )
-        except OSError:
+            with open(self.log_file,"a",encoding="utf-8") as file:
+                file.write(entry)
+
+            print(entry.strip())
+        except OSError as e:
+            print(f"[ERROR] Failed to write log: {e}")
+
+    def heartbeat_worker(self):
+        print("[WORKER] Heartbeat thread started")
+
+        while not self.stop_event.is_set():
+            self.write_heartbeat()
+            time.sleep(self.interval)
+        
+        print("[WORKER] Heartbeat thread stopped")
+
+    def start(self):
+
+        print("[SYSTEM] Heartbeat Agent Started...")
+
+        self.thread = threading.Thread(
+            target=self.heartbeat_worker,
+            daemon=True
+        )              
+
+        self.thread.start()
+
+    def stop(self):
+        print("\n[SYSTEM] Stopping Heartbeat Agent ...")
+
+        self.stop_event.set()
+
+        if self.thread and self.thread.is_alive():
+            self.thread.join()
+
+        shutdown_time = datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )  
+
+        try:
+            with open(self.log_file,"a",encoding="utf-8") as file:
+                file.write(f"{shutdown_time} | SYSTEM | Agent stopped by user\n")
+            
+        except OSError :
             pass
 
-        print("\nHeartbeat Agent Stopped.")
-
-    except Exception as e:
-        print(f"\n[CRITICAL ERROR] {e}")
-
-if __name__ == "__main__":
-    main()
-
-
+        print("[SYSTEM] Heartbeat agent stopped.")
 # Phase - 1
 
 # HEARTBEAT AGENT - PROJECT DOCUMENTATION
