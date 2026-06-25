@@ -1,13 +1,15 @@
 from datetime import datetime
 import time
 from pathlib import Path
+import threading
 
 LOG_DIR = Path("logs")
-
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 LOG_FILE = LOG_DIR / "data.log"
 INTERVAL = 5
+
+stop_event = threading.Event()
 
 def write_heartbeat():
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -22,15 +24,40 @@ def write_heartbeat():
     
     except OSError as e:
         print(f"[ERROR] Failed to write log: {e}")
+
+def heartbeat_worker():
+    print("[WORKER] Heartbeat thread started")
+
+    while not stop_event.is_set():
+        write_heartbeat()
+        time.sleep(INTERVAL)
+
+    print("[WORKER] Heartbeat thread stopped")
+
+
 def main():
     print("Heartbeat Agent Started...")
+    
+    heartbeat_thread = threading.Thread(
+        target=heartbeat_worker,
+        daemon=True
+    )
+
+    heartbeat_thread.start()
 
     try:
         while True:
-            write_heartbeat()
-            time.sleep(INTERVAL)
+            print("[MAIN] Application is responsive")
+            time.sleep(1)
 
     except KeyboardInterrupt:
+
+        print("\nStopping Heartbeat Agent...")
+
+        stop_event.set()
+
+        heartbeat_thread.join()
+
         shutdown_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         try:
@@ -48,6 +75,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# Phase - 1
 
 # HEARTBEAT AGENT - PROJECT DOCUMENTATION
 
@@ -402,3 +432,112 @@ if __name__ == "__main__":
 # ✓ Clean and maintainable structure
 
 # The Heartbeat Agent is a lightweight monitoring utility that demonstrates practical use of Python file handling, exception management, process monitoring, and structured logging. Its improved implementation provides greater reliability through automatic directory management, robust error handling, and graceful application shutdown procedures.
+
+# Background Execution Layer (Threaded Architecture)
+# 🎯 Objective of Phase 2
+
+# Phase 2 transforms the Heartbeat Agent from a blocking script into a multi-threaded application architecture.
+
+# In Phase 1:
+
+# The heartbeat loop controlled the entire program:
+
+# Main Thread
+#    │
+#    └── Infinite Heartbeat Loop (blocking)
+# Problem:
+# The program is fully occupied
+# No GUI or additional features can run
+# Future expansion is impossible without freezing the app
+# 🚀 Phase 2 Goal
+
+# Move the heartbeat system into a background thread, so the application becomes:
+
+# Main Thread
+#    │
+#    ├── Application Layer (future GUI / controls)
+#    │
+#    └── Background Thread
+#         └── Heartbeat Engine
+# 🧱 Key Concept Introduced
+# 🔹 Multithreading
+
+# A thread allows multiple tasks to run concurrently inside the same program.
+
+# Main thread → handles UI / control flow
+# Worker thread → handles heartbeat logging
+# ⚙️ Major Changes in Phase 2
+# 1. 🔄 Heartbeat moved to a Worker Thread
+# Before (Phase 1):
+# while True:
+#     write_heartbeat()
+#     time.sleep(5)
+# After (Phase 2):
+
+# Heartbeat runs inside a separate function:
+
+# def heartbeat_worker():
+#     while not stop_event.is_set():
+#         write_heartbeat()
+#         time.sleep(INTERVAL)
+# 2. 🧵 Introduction of Threading
+# import threading
+
+# A dedicated thread is created:
+
+# heartbeat_thread = threading.Thread(
+#     target=heartbeat_worker,
+#     daemon=True
+# )
+# heartbeat_thread.start()
+# What this means:
+# Heartbeat runs independently
+# Main program stays responsive
+# Future GUI support becomes possible
+# 3. 🛑 Graceful Stop Mechanism (stop_event)
+# stop_event = threading.Event()
+# Purpose:
+
+# Used to safely stop the worker thread.
+
+# How it works:
+# Running: stop_event = False
+# Stop requested: stop_event.set()
+
+# Worker checks:
+
+# while not stop_event.is_set():
+# 4. 🧠 Clean Shutdown Process
+
+# When user presses Ctrl + C:
+
+# Step-by-step flow:
+# KeyboardInterrupt detected
+
+# Stop signal sent:
+
+# stop_event.set()
+# Worker thread finishes loop
+
+# Main thread waits:
+
+# heartbeat_thread.join()
+# Shutdown logged to file
+# Program exits safely
+
+# 5. 🧵 daemon Thread Behavior
+# daemon=True
+# Meaning:
+# Thread automatically stops when main program exits
+# Prevents orphan processes
+
+# 6. 📡 Main Thread Becomes Free
+
+# Instead of being blocked, main thread now:
+
+# while True:
+#     print("[MAIN] Application is responsive")
+#     time.sleep(1)
+# Purpose:
+# Simulates UI responsiveness
+# Prepares for Phase 3 (GUI integration)
