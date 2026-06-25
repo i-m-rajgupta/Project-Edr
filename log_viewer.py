@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit, QPushButton
+from PyQt6.QtCore import QTimer
 
 LOG_FILE = Path("logs/data.log")
 
@@ -16,15 +17,14 @@ class LogViewer(QWidget):
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
 
-        self.refresh_button = QPushButton("Load Logs")
-        self.refresh_button.clicked.connect(self.load_logs)
-
         layout.addWidget(self.log_area)
-        layout.addWidget(self.refresh_button)
-
         self.setLayout(layout)
 
         self.load_logs()
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.load_logs)
+        self.timer.start(1000)
 
     def load_logs(self):
         if LOG_FILE.exists():
@@ -33,6 +33,10 @@ class LogViewer(QWidget):
                     content = file.read()
 
                 self.log_area.setText(content)
+
+                self.log_area.verticalScrollBar().setValue(
+                    self.log_area.verticalScrollBar().maximum()
+                )
 
             except Exception as e:
                 self.log_area.setText(f"Error reading log file : {e}")
@@ -298,4 +302,240 @@ if __name__ == "__main__":
 # ➡ Phase 4: Live Auto-Refresh Dashboard
 # ➡ Phase 5: System Tray Integration
 # ➡ Phase 6: Full Monitoring Application
+# ========================================
+
+# ========================================
+# 🟡 HEARTBEAT AGENT — PHASE 4 DOCUMENTATION
+# LIVE DATA REFRESH SYSTEM (PyQt6)
+# ========================================
+
+# 🎯 OBJECTIVE OF PHASE 4
+# ----------------------------------------
+# Phase 4 upgrades the GUI from a manual log viewer into a LIVE MONITORING DASHBOARD.
+
+# The goal is:
+
+# ✔ Auto-refresh logs every 1 second
+# ✔ Display real-time heartbeat updates
+# ✔ Remove manual refresh button dependency
+# ✔ Keep GUI responsive at all times
+# ✔ Ensure Phase 2 heartbeat continues independently
+
+# IMPORTANT:
+# - NO while loops in GUI
+# - NO time.sleep() in GUI thread
+# - Updates must use QTimer (event-driven model)
+
+
+# ========================================
+# 🧠 CORE IDEA OF PHASE 4
+# ========================================
+
+# Instead of manual refresh:
+
+#     User clicks button → load logs
+
+# We now use automatic refresh:
+
+#     QTimer → calls load_logs() every 1 second
+
+
+# This converts the system into:
+
+# REAL-TIME MONITORING DASHBOARD
+
+
+# ========================================
+# 🧱 UPDATED SYSTEM ARCHITECTURE
+# ========================================
+
+# PHASE 2 (BACKEND - HEARTBEAT ENGINE)
+# ----------------------------------------
+# Heartbeat Thread
+#         ↓
+# Writes logs to:
+# logs/data.log
+
+
+# PHASE 4 (FRONTEND - LIVE DASHBOARD)
+# ----------------------------------------
+# PyQt6 GUI
+#         ↓
+# QTimer (every 1 second)
+#         ↓
+# Reads logs/data.log
+#         ↓
+# Updates UI automatically
+
+
+# KEY FLOW:
+# Heartbeat → File → GUI Timer → Display
+
+
+# ========================================
+# ⚙️ KEY UPGRADE IN PHASE 4
+# ========================================
+
+# PHASE 3 (OLD)
+# ----------------------------------------
+# ✔ Manual refresh button
+# ✔ User triggers log update
+
+
+# PHASE 4 (NEW)
+# ----------------------------------------
+# ✔ Automatic updates every 1 second
+# ✔ No user interaction required
+# ✔ Continuous live feed
+
+
+# ========================================
+# 🧠 IMPORTANT CONCEPTS
+# ========================================
+
+# 1. EVENT-DRIVEN UPDATES
+# ----------------------------------------
+# Instead of loops:
+
+# ❌ while True:
+#        load_logs()
+
+# We use:
+
+# ✔ QTimer → triggers function repeatedly
+
+
+# 2. WHY QTimer IS USED
+# ----------------------------------------
+# ✔ Non-blocking
+# ✔ GUI remains responsive
+# ✔ Works inside Qt event loop
+# ✔ Safe for single-threaded GUI apps
+
+
+# 3. GUI THREAD RULE
+# ----------------------------------------
+# Qt GUI must NEVER be blocked.
+
+# DO NOT:
+# ❌ time.sleep()
+# ❌ infinite loops
+# ❌ heavy processing in main thread
+
+
+# ========================================
+# 🟢 PHASE 4 CODE EXPLANATION
+# ========================================
+
+# MAIN COMPONENTS:
+
+# 1. QTextEdit
+# ----------------------------------------
+# Displays logs in scrollable window
+
+
+# 2. QTimer
+# ----------------------------------------
+# Triggers automatic updates every 1000 ms
+
+
+# 3. load_logs()
+# ----------------------------------------
+# Reads log file and updates UI
+
+
+# 4. verticalScrollBar()
+# ----------------------------------------
+# Auto-scrolls to latest log entry
+
+
+
+# ========================================
+# 🧪 WHAT YOU WILL OBSERVE
+# ========================================
+
+# BEFORE PHASE 4:
+# ----------------------------------------
+# ✔ Manual refresh required
+# ✔ Button click updates logs
+
+
+# AFTER PHASE 4:
+# ----------------------------------------
+# ✔ Logs update automatically every 1 second
+# ✔ New heartbeat entries appear instantly
+# ✔ No button required
+# ✔ Smooth scrolling to latest entry
+# ✔ UI remains responsive
+
+
+# Example live output:
+
+# 10:00:00 | HEARTBEAT
+# 10:00:05 | HEARTBEAT
+# 10:00:10 | HEARTBEAT   ← appears automatically
+# 10:00:15 | HEARTBEAT   ← appears automatically
+
+
+# ========================================
+# 🧠 KEY LEARNINGS FROM PHASE 4
+# ========================================
+
+# 1. EVENT-DRIVEN PROGRAMMING
+# ----------------------------------------
+# System reacts to timer events instead of loops.
+
+
+# 2. REAL-TIME DASHBOARD LOGIC
+# ----------------------------------------
+# Data flow:
+
+# Heartbeat → File → Timer → GUI → Display
+
+
+# 3. NON-BLOCKING UI DESIGN
+# ----------------------------------------
+# ✔ No freezing
+# ✔ No infinite loops
+# ✔ No sleep in GUI thread
+
+
+# 4. INDUSTRY PATTERN
+# ----------------------------------------
+# This is the same model used in:
+
+# ✔ System monitors
+# ✔ Task managers
+# ✔ Performance dashboards
+# ✔ Logging tools
+
+
+# ========================================
+# 🟡 PHASE 4 SUCCESS CRITERIA
+# ========================================
+
+# You have completed Phase 4 when:
+
+# ✔ GUI updates automatically every 1 second
+# ✔ New logs appear without user input
+# ✔ UI remains responsive
+# ✔ Scroll stays at latest entry
+# ✔ Phase 2 heartbeat continues independently
+# ✔ No freezing or lag
+
+
+# ========================================
+# 🚀 WHAT PHASE 4 ENABLES
+# ========================================
+
+# Now your system becomes a REAL monitoring dashboard:
+
+# ✔ Backend (Heartbeat Engine)
+# ✔ Frontend (Live GUI Dashboard)
+# ✔ Auto-refresh system (QTimer)
+
+# NEXT POSSIBLE UPGRADE:
+
+# ➡ Phase 5: System Tray Application
+# ➡ Phase 6: Advanced Monitoring Dashboard (filters, charts, alerts)
 # ========================================
