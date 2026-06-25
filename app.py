@@ -7,7 +7,8 @@ from heartbeat import HeartbeatEngine
 from log_viewer import LogViewer
 from tray_controller import TrayController
 
-LOG_FILE = Path("logs/data.log")
+
+from config import LOG_FILE
 
 class AgentController:
 

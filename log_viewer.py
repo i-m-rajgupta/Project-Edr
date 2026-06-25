@@ -1,56 +1,11 @@
-# from pathlib import Path
-# from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit
-# from PyQt6.QtCore import QTimer
-
-
-# LOG_FILE = Path("logs/data.log")
-
-# class LogViewer(QWidget):
-#     def __init__(self):
-#         super().__init__()
-
-#         self.setWindowTitle("Heartbeat Log Viewer")
-#         self.setGeometry(300,200,700,500)
-
-#         layout = QVBoxLayout()
-
-#         self.log_area = QTextEdit()
-#         self.log_area.setReadOnly(True)
-
-#         layout.addWidget(self.log_area)
-#         self.setLayout(layout)
-
-#         self.load_logs()
-
-#         self.timer = QTimer()
-#         self.timer.timeout.connect(self.load_logs)
-#         self.timer.start(1000)
-        
-#         self.hide()
-
-#     def load_logs(self):
-#         if LOG_FILE.exists():
-#             try:
-#                 with open(LOG_FILE,"r",encoding="utf-8") as file:
-#                     content = file.read()
-
-#                 self.log_area.setText(content)
-
-#                 self.log_area.verticalScrollBar().setValue(
-#                     self.log_area.verticalScrollBar().maximum()
-#                 )
-
-#             except Exception as e:
-#                 self.log_area.setText(f"Error reading log file : {e}")
-
-#         else:
-#             self.log_area.setText("Log file not found.") 
-   
 from pathlib import Path
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit
 from PyQt6.QtCore import QTimer
 
-LOG_FILE = Path("logs/data.log")
+import sys
+import os
+
+from config import LOG_FILE
 
 
 class LogViewer(QWidget):

@@ -1,5 +1,15 @@
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PyQt6.QtGui import QAction,QIcon
+import sys
+import os
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class TrayController:
     def __init__(self,gui_factory,exit_callback):
@@ -50,12 +60,14 @@ class TrayController:
 
     def get_app_icon(self):
         
-        icon_path = "assets/app_icon.png"
+        icon_path = resource_path("assets/app_icon.ico")
 
         icon = QIcon(icon_path)
-
+        
+        
         if not icon.isNull():
             return icon
+        
 
         return QApplication.style().standardIcon(
             QApplication.style().StandardPixmap.SP_ComputerIcon
