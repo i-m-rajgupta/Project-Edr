@@ -19,16 +19,18 @@ class AgentController:
             interval=5
         )
 
-        self.viewer = LogViewer()
+        self.app.setQuitOnLastWindowClosed(False)
+
+        self.gui_factory = lambda: LogViewer()
 
         self.tray = TrayController(
-            viewer=self.viewer,
+            gui_factory=self.gui_factory,
             exit_callback=self.shutdown 
         )
         
 
     def start(self):
-        print("[SYSTEM] Starting Heartbeat Agent")
+        print("[SYSTEM] Starting Daemon Agent")
         self.engine.start()
         return self.app.exec()
         
@@ -38,14 +40,14 @@ class AgentController:
 
         self.engine.stop()
         self.tray.hide()
-        self.viewer.close()
+        if self.tray.viewer:
+            self.tray.viewer.close()
         self.app.quit()
+        print("[SYSTEM] Agent stopped cleanly")
 
 def main():
     controller = AgentController()
-
     exit_code = controller.start()
-    print("[SYSTEM] Application exited")
     sys.exit(exit_code)
         
 
@@ -421,4 +423,376 @@ if __name__ == "__main__":
 
 # This completes Phase 6:
 # FULL DAEMON ARCHITECTURE.
+# ========================================
+
+
+# ========================================
+# 🔵 HEARTBEAT AGENT — PHASE 7 DOCUMENTATION
+# REAL DAEMON ARCHITECTURE (PyQt6)
+# ========================================
+
+# PROJECT OVERVIEW
+# ----------------------------------------
+# Phase 7 transforms the system from a "desktop app with background thread"
+# into a TRUE DAEMON-STYLE ARCHITECTURE.
+
+# Key Idea:
+# ✔ Engine runs always (independent service)
+# ✔ Tray runs always (control layer)
+# ✔ GUI is optional (on-demand tool)
+
+
+# ========================================
+# 🧠 WHY PHASE 7 EXISTS
+# ========================================
+
+# Before Phase 7:
+# ----------------------------------------
+# GUI + Tray + Engine = tightly connected system
+
+# Problems:
+# ❌ GUI lifecycle affects backend
+# ❌ Closing window may stop system
+# ❌ App behaves like a normal desktop program
+# ❌ No true background operation
+
+
+# After Phase 7:
+# ----------------------------------------
+# Each component becomes independent:
+
+# ✔ HeartbeatEngine → ALWAYS running
+# ✔ TrayController   → ALWAYS running
+# ✔ LogViewer        → ON DEMAND ONLY
+
+
+# RESULT:
+# ✔ System behaves like a real background agent
+# ✔ GUI is no longer required for operation
+
+
+# ========================================
+# 🏗 SYSTEM ARCHITECTURE (PHASE 7)
+# ========================================
+
+#                 AgentController (CORE)
+#                          │
+#         ┌────────────────┼────────────────┐
+#         │                │                │
+#         ▼                ▼                ▼
+
+# HeartbeatEngine     TrayController     LogViewer
+# (Always Running)    (Always Active)    (On Demand)
+
+
+# DATA FLOW:
+# ----------------------------------------
+# HeartbeatEngine → writes logs → data/log.txt → LogViewer reads
+
+
+# ========================================
+# 🚀 STARTUP FLOW
+# ========================================
+
+# 1. main() executes
+# 2. AgentController is created
+# 3. QApplication starts
+# 4. HeartbeatEngine starts thread
+# 5. TrayController initializes system tray
+# 6. GUI is NOT created initially
+
+# FINAL STATE:
+# ✔ Background engine running
+# ✔ Tray active
+# ✔ GUI idle (not created)
+
+
+# ========================================
+# 🔵 HEARTBEAT ENGINE (DAEMON CORE)
+# ========================================
+
+# FILE: heartbeat.py
+
+# PURPOSE:
+# Background service that continuously writes system status logs.
+
+
+# THREAD BEHAVIOR:
+# ----------------------------------------
+
+# while not stop_event.is_set():
+#     write_heartbeat()
+#     sleep(interval)
+
+
+# LOG FORMAT:
+# ----------------------------------------
+# timestamp | HEARTBEAT | System is running
+
+
+# FEATURES:
+# ----------------------------------------
+# ✔ Independent of GUI
+# ✔ Runs in background thread
+# ✔ Controlled via stop_event
+# ✔ Safe shutdown using thread join()
+
+
+# START FLOW:
+# ----------------------------------------
+# Thread created → started → runs forever
+
+
+# STOP FLOW:
+# ----------------------------------------
+# stop_event.set()
+# thread.join()
+
+
+# RESULT:
+# ✔ True background service behavior
+
+
+# ========================================
+# 🟡 TRAY CONTROLLER (CONTROL LAYER)
+# ========================================
+
+# FILE: tray_controller.py
+
+# PURPOSE:
+# System control interface using OS system tray.
+
+
+# COMPONENTS USED:
+# ----------------------------------------
+
+# ✔ QSystemTrayIcon → tray icon
+# ✔ QMenu → right-click menu
+# ✔ QAction → clickable menu items
+# ✔ QIcon → icon handling
+
+
+# ========================================
+# 🖼 ICON SYSTEM
+# ========================================
+
+# FUNCTION:
+# get_app_icon()
+
+# LOGIC:
+# ----------------------------------------
+# Try:
+#     assets/app_icon.png
+
+# If valid:
+#     use custom icon
+
+# Else:
+#     fallback to Qt default icon
+
+
+# BENEFIT:
+# ✔ Prevents missing icon crash
+# ✔ Allows branding support
+
+
+# ========================================
+# 📋 TRAY MENU SYSTEM
+# ========================================
+
+# Menu Options:
+# ----------------------------------------
+# 1. Open Log Viewer
+# 2. Exit
+
+
+# BEHAVIOR:
+# ----------------------------------------
+# Open Log Viewer → toggles GUI creation
+# Exit → shuts down entire system
+
+
+# ========================================
+# 🧠 GUI LAZY LOADING (IMPORTANT CHANGE)
+# ========================================
+
+# KEY IDEA:
+# GUI is NOT created at startup.
+
+# Instead:
+
+# ✔ Created only when user clicks tray
+
+
+# LOGIC:
+# ----------------------------------------
+# if viewer is None:
+#     viewer = create_gui()
+
+
+# BENEFIT:
+# ✔ Saves memory
+# ✔ Improves startup speed
+# ✔ Enables true daemon behavior
+
+
+# ========================================
+# 🖱 TRAY INTERACTIONS
+# ========================================
+
+# Double Click:
+# ----------------------------------------
+# → Open / Close Log Viewer
+
+
+# Right Click:
+# ----------------------------------------
+# → Show menu
+
+
+# ========================================
+# 🟢 WINDOW TOGGLE LOGIC
+# ========================================
+
+# If GUI visible:
+#     hide()
+
+# Else:
+#     show()
+#     raise()
+#     activateWindow()
+
+
+# FEATURE:
+# ✔ GUI does not control lifecycle anymore
+# ✔ Only visibility is controlled
+
+
+# ========================================
+# 🟣 AGENT CONTROLLER (CORE SYSTEM)
+# ========================================
+
+# FILE: app.py
+
+# ROLE:
+# Main orchestrator of entire system.
+
+
+# RESPONSIBILITIES:
+# ----------------------------------------
+# ✔ Create QApplication
+# ✔ Start HeartbeatEngine
+# ✔ Initialize TrayController
+# ✔ Manage shutdown lifecycle
+
+
+# ========================================
+# 🚀 START METHOD FLOW
+# ========================================
+
+# engine.start()
+# app.exec()
+
+
+# MEANING:
+# ----------------------------------------
+# ✔ Engine starts background thread
+# ✔ Qt event loop starts
+# ✔ Tray becomes active system controller
+
+
+# ========================================
+# 🧯 SHUTDOWN FLOW
+# ========================================
+
+# Triggered by:
+# ----------------------------------------
+# ✔ Tray Exit button
+# ✔ System shutdown call
+
+
+# PROCESS:
+# ----------------------------------------
+# 1. Stop heartbeat thread
+# 2. Hide tray
+# 3. Close GUI if open
+# 4. Quit QApplication
+
+
+# RESULT:
+# ✔ Clean shutdown
+# ✔ No zombie threads
+
+
+# ========================================
+# 🔄 FULL SYSTEM BEHAVIOR (PHASE 7)
+# ========================================
+
+# RUNNING STATE:
+# ----------------------------------------
+
+# HeartbeatEngine → always running
+# TrayController   → always active
+# LogViewer        → only when opened
+
+
+# USER ACTIONS:
+# ----------------------------------------
+
+# Tray Click:
+#     → Open/Close GUI
+
+# Exit:
+#     → Stop engine + quit app
+
+# GUI Close:
+#     → DOES NOT STOP SYSTEM
+
+
+# ========================================
+# 🧠 KEY CONCEPTS LEARNED
+# ========================================
+
+# ✔ True background daemon design
+# ✔ Lazy GUI initialization
+# ✔ Separation of system components
+# ✔ OS-level system tray integration
+# ✔ Event-driven architecture
+# ✔ Thread-safe lifecycle control
+# ✔ Real-world agent design pattern
+
+
+# ========================================
+# 🟢 FINAL RESULT
+# ========================================
+
+# Phase 7 achieves a real daemon system:
+
+# ✔ Heartbeat runs independently
+# ✔ Tray always active
+# ✔ GUI is optional
+# ✔ System survives window closing
+# ✔ Clean shutdown lifecycle
+
+
+# ========================================
+# 🚀 PHASE 7 CONCLUSION
+# ========================================
+
+# Phase 7 is the transformation point:
+
+# FROM:
+#     GUI-based Python app
+
+# TO:
+#     Background agent system (daemon architecture)
+
+
+# This is the same design pattern used in:
+# ✔ Discord
+# ✔ Google Drive
+# ✔ Steam
+# ✔ Antivirus software
+# ✔ System monitors
+
 # ========================================

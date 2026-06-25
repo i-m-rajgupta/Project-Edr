@@ -1,16 +1,66 @@
+# from pathlib import Path
+# from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit
+# from PyQt6.QtCore import QTimer
+
+
+# LOG_FILE = Path("logs/data.log")
+
+# class LogViewer(QWidget):
+#     def __init__(self):
+#         super().__init__()
+
+#         self.setWindowTitle("Heartbeat Log Viewer")
+#         self.setGeometry(300,200,700,500)
+
+#         layout = QVBoxLayout()
+
+#         self.log_area = QTextEdit()
+#         self.log_area.setReadOnly(True)
+
+#         layout.addWidget(self.log_area)
+#         self.setLayout(layout)
+
+#         self.load_logs()
+
+#         self.timer = QTimer()
+#         self.timer.timeout.connect(self.load_logs)
+#         self.timer.start(1000)
+        
+#         self.hide()
+
+#     def load_logs(self):
+#         if LOG_FILE.exists():
+#             try:
+#                 with open(LOG_FILE,"r",encoding="utf-8") as file:
+#                     content = file.read()
+
+#                 self.log_area.setText(content)
+
+#                 self.log_area.verticalScrollBar().setValue(
+#                     self.log_area.verticalScrollBar().maximum()
+#                 )
+
+#             except Exception as e:
+#                 self.log_area.setText(f"Error reading log file : {e}")
+
+#         else:
+#             self.log_area.setText("Log file not found.") 
+   
 from pathlib import Path
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QTextEdit
 from PyQt6.QtCore import QTimer
 
-
 LOG_FILE = Path("logs/data.log")
 
+
 class LogViewer(QWidget):
+
     def __init__(self):
+
         super().__init__()
 
         self.setWindowTitle("Heartbeat Log Viewer")
-        self.setGeometry(300,200,700,500)
+        self.setGeometry(300, 200, 700, 500)
 
         layout = QVBoxLayout()
 
@@ -20,33 +70,43 @@ class LogViewer(QWidget):
         layout.addWidget(self.log_area)
         self.setLayout(layout)
 
+        self.last_content = ""
+
         self.load_logs()
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.load_logs)
         self.timer.start(1000)
-        
+
         self.hide()
 
     def load_logs(self):
+
         if LOG_FILE.exists():
+
             try:
-                with open(LOG_FILE,"r",encoding="utf-8") as file:
+                with open(LOG_FILE, "r", encoding="utf-8") as file:
                     content = file.read()
 
-                self.log_area.setText(content)
+                if content != self.last_content:
+                    self.last_content = content
 
-                self.log_area.verticalScrollBar().setValue(
-                    self.log_area.verticalScrollBar().maximum()
-                )
+                    self.log_area.setText(content)
+
+                    self.log_area.verticalScrollBar().setValue(
+                        self.log_area.verticalScrollBar().maximum()
+                    )
 
             except Exception as e:
-                self.log_area.setText(f"Error reading log file : {e}")
+                self.log_area.setText(f"Error reading log file: {e}")
 
         else:
-            self.log_area.setText("Log file not found.") 
-   
+            self.log_area.setText("Log file not found.")
 
+    def closeEvent(self, event):
+
+        self.timer.stop()
+        event.accept()
 # ========================================
 # 🟢 HEARTBEAT AGENT — PHASE 3 DOCUMENTATION
 # LOG VISUALIZATION INTERFACE (PyQt6)

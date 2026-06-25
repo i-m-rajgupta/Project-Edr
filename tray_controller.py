@@ -2,11 +2,13 @@ from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PyQt6.QtGui import QAction,QIcon
 
 class TrayController:
-    def __init__(self,viewer,exit_callback):
+    def __init__(self,gui_factory,exit_callback):
         
-        self.viewer = viewer
+        self.gui_factory = gui_factory
         self.exit_callback = exit_callback
-
+        
+        self.viewer = None
+        
         self.tray = QSystemTrayIcon()
 
         self.tray.setIcon(self.get_app_icon())
@@ -24,13 +26,11 @@ class TrayController:
         menu = QMenu()
 
         self.toggle_action = QAction(
-            "Show Window",
-            self.tray
+            "Show Window"
         )
 
         self.exit_action = QAction(
-                "Exit",
-                self.tray
+                "Exit"
         )
 
         self.toggle_action.triggered.connect(
@@ -55,7 +55,6 @@ class TrayController:
         icon = QIcon(icon_path)
 
         if not icon.isNull():
-            print("Icon exited ")
             return icon
 
         return QApplication.style().standardIcon(
@@ -63,9 +62,11 @@ class TrayController:
         )           
     
     def toggle_window(self):
+        if self.viewer is None:
+            self.viewer = self.gui_factory()
+
         if self.viewer.isVisible():
             self.viewer.hide()
-
             self.toggle_action.setText("Show Window")
 
         else:
@@ -81,3 +82,6 @@ class TrayController:
 
     def hide(self):
         self.tray.hide()
+
+        if self.viewer:
+            self.viewer.close()
